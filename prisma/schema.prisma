@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+// Modelo de Usuário
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   // Hash Argon2
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relacionamento com Refresh Tokens
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+  @@index([email])
+}
+
+// Modelo de Refresh Token (para permitir revogação)
+model RefreshToken {
+  id           String    @id @default(uuid())
+  token        String    @unique // Hash do token (não armazenamos o token puro)
+  userId       String    @map("user_id")
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt    DateTime  @map("expires_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  revokedAt    DateTime? @map("revoked_at") // Null = ativo, preenchido = revogado
+  replacedBy   String?   @map("replaced_by") // ID do novo token (para Rotation)
+  
+  // Grace Period: armazena o novo token gerado durante rotação
+  gracePeriodToken String?  @map("grace_period_token")
+  gracePeriodEnds  DateTime? @map("grace_period_ends")
+
+  @@map("refresh_tokens")
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+}
