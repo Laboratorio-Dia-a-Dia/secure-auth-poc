@@ -1,26 +1,34 @@
 # 🔐 Secure Distributed Auth Gateway
 
-Sistema profissional de autenticação JWT baseado em **HttpOnly Cookies**, **Redis Blacklist** e proteção **CSRF**, seguindo padrões OWASP e Clean Architecture.
+[![en](https://img.shields.io/badge/lang-en-red.svg)](README.md)
+[![pt-br](https://img.shields.io/badge/lang-pt--br-green.svg)](README.pt-br.md)
+
+![CI Status](https://github.com/GersonResplandes/secure-auth-poc/actions/workflows/ci.yml/badge.svg)
+![Coverage](https://img.shields.io/badge/coverage-70%25%2B-brightgreen)
+![Node Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen)
+![TypeScript](https://img.shields.io/badge/typescript-5.7-blue)
+
+Professional JWT authentication system based on **HttpOnly Cookies**, **Redis Blacklist**, and **CSRF Protection**, following OWASP standards and Clean Architecture.
 
 ---
 
-## 🎯 Objetivo
+## 🎯 Goal
 
-Este é um **Proof of Concept (PoC)** que demonstra:
+This is a **Proof of Concept (PoC)** demonstrating:
 
-- ✅ Autenticação **stateless** (JWT) com revogação **stateful** (Redis Blacklist)
-- ✅ **Automatic Token Rotation** com **Grace Period** (evita race conditions)
-- ✅ **Reuse Detection** (detecta roubo de tokens e revoga toda a cadeia)
-- ✅ **Rate Limiting Híbrido** (por IP + Email para login, bloqueio de brute-force)
+- ✅ **Stateless** authentication (JWT) with **stateful** revocation (Redis Blacklist)
+- ✅ **Automatic Token Rotation** with **Grace Period** (prevents race conditions)
+- ✅ **Reuse Detection** (detects token theft and revokes entire chain)
+- ✅ **Hybrid Rate Limiting** (by IP + Email for login, preventing brute-force)
 - ✅ **CSRF Protection** (Synchronizer Token Pattern)
-- ✅ **HttpOnly Cookies** (mitigação de XSS)
-- ✅ **Clean Architecture** modular (Controllers → Services → Repositories)
+- ✅ **HttpOnly Cookies** (XSS mitigation)
+- ✅ **Clean Architecture** (Controllers → Services → Repositories)
 
 ---
 
-## 🛠️ Stack Tecnológico
+## 🛠️ Tech Stack
 
-| Categoria | Tecnologia |
+| Category | Technology |
 |-----------|------------|
 | **Runtime** | Node.js 20 + TypeScript (Strict Mode) |
 | **Framework** | Express.js |
@@ -34,112 +42,112 @@ Este é um **Proof of Concept (PoC)** que demonstra:
 
 ---
 
-## 📂 Arquitetura de Pastas
+## 📂 Folder Architecture
 
 ```
 secure-auth-poc/
 ├── src/
-│   ├── @types/             # Type definitions globais
-│   ├── config/             # Validação de env (Zod)
-│   ├── modules/            # Módulos de negócio
-│   │   ├── auth/           # Autenticação (Login, Refresh, Logout)
-│   │   └── user/           # Usuário (Profile, Update Password)
-│   ├── shared/             # Código reutilizável
-│   │   ├── errors/         # AppError customizado
+│   ├── @types/             # Global Type definitions
+│   ├── config/             # Env validation (Zod)
+│   ├── modules/            # Business Modules
+│   │   ├── auth/           # Authentication (Login, Refresh, Logout)
+│   │   └── user/           # User (Profile, Update Password)
+│   ├── shared/             # Reusable Code
+│   │   ├── errors/         # Custom AppError
 │   │   ├── middlewares/    # AuthGuard, RateLimiter, CSRF
 │   │   ├── utils/          # HashProvider, TokenManager, Blacklist
 │   │   └── infra/          # Redis Client
-│   ├── app.ts              # Setup do Express
+│   ├── app.ts              # Express Setup
 │   └── server.ts           # Entry point
 ├── prisma/
-│   └── schema.prisma       # Modelagem do banco
+│   └── schema.prisma       # Database Model
 ├── docker-compose.yml      # MySQL + Redis
 └── README.md
 ```
 
 ---
 
-## 🚀 Como Rodar
+## 🚀 How to Run
 
-### 1. Clone o repositório
+### 1. Clone the repository
 
 ```bash
-git clone https://github.com/seu-usuario/secure-auth-poc.git
+git clone https://github.com/GersonResplandes/secure-auth-poc.git
 cd secure-auth-poc
 ```
 
-### 2. Configure as variáveis de ambiente
+### 2. Configure environment variables
 
 ```bash
 cp .env.example .env
-# Edite o .env e altere os secrets de JWT e CSRF
+# Edit .env and change JWT and CSRF secrets
 ```
 
-### 3. Suba o ambiente com Docker
+### 3. Start environment with Docker
 
 ```bash
 npm run docker:up
 ```
 
-Isso iniciará:
-- **MySQL** (porta 3306)
-- **Redis** (porta 6379)
+This will start:
+- **MySQL** (port 3306)
+- **Redis** (port 6379)
 
-### 4. Instale as dependências
+### 4. Install dependencies
 
 ```bash
 npm install
 ```
 
-### 5. Execute as migrations do Prisma
+### 5. Run Prisma migrations
 
 ```bash
 npx prisma migrate dev
 ```
 
-### 6. Inicie o servidor
+### 6. Start the server
 
 ```bash
 npm run dev
 ```
 
-O servidor estará rodando em **http://localhost:3000**
+The server will be running at **http://localhost:3000**
 
 ---
 
-## 🧪 Rodando Testes
+## 🧪 Running Tests
 
-Este projeto possui testes **unitários** e de **integração** com gerenciamento automático de infraestrutura.
+This project has **unit** and **integration** tests with automatic infrastructure management.
 
-### Executar Todos os Testes (Recomendado)
+### Run All Tests (Recommended)
 
 ```bash
 npm test
 ```
 
-**O que acontece:**
-1. ✅ Sobe containers Docker (MySQL + Redis) automaticamente
-2. ✅ Executa testes unitários (HashProvider, TokenManager)
-3. ✅ Executa testes de integração (Auth flow completo)
-4. ✅ Mantém containers rodando para reuso
+**What happens:**
+1. ✅ Docker containers (MySQL + Redis) start automatically
+2. ✅ Unit tests run (HashProvider, TokenManager)
+3. ✅ Integration tests run (Full Auth flow)
+4. ✅ Containers stay running for reuse
 
-**Resultado esperado:** `20 tests passed`
+**Expected result:** `46 tests passed`
 
-### Apenas Testes Unitários (Rápido - sem Docker)
+### Unit Tests Only (Fast - No Docker)
 
 ```bash
 npm run test:unit
 ```
 
-Executa apenas testes que não dependem de infraestrutura (~2s).
+Runs only tests that do not depend on infrastructure (~2s).
 
-### Apenas Testes de Integração
+### Integration Tests Only
 
 ```bash
 npm run test:integration
 ```
 
-Testa fluxos end-to-end (Registro → Login → Refresh → Logout).
+Tests end-to-end flows (Register → Login → Refresh → Logout).
 
 ### Coverage Report
 
@@ -147,11 +155,11 @@ Testa fluxos end-to-end (Registro → Login → Refresh → Logout).
 npm run test:coverage
 ```
 
-Gera relatório de cobertura em `coverage/lcov-report/index.html`.
+Generates coverage report in `coverage/lcov-report/index.html`.
 
 **Threshold:** 70% (branches, functions, lines, statements)
 
-### Parar Infraestrutura de Testes
+### Stop Test Infrastructure
 
 ```bash
 npm run docker:down
@@ -159,19 +167,19 @@ npm run docker:down
 
 ---
 
-## 📖 Endpoints da API
+## 📖 API Endpoints
 
-### **Autenticação**
+### **Authentication**
 
 #### POST `/api/auth/register`
 
-Registra um novo usuário.
+Registers a new user.
 
 **Body:**
 ```json
 {
   "email": "user@example.com",
-  "password": "Senha123",
+  "password": "Password123",
   "name": "John Doe"
 }
 ```
@@ -196,13 +204,13 @@ Registra um novo usuário.
 
 #### POST `/api/auth/login`
 
-Faz login e retorna cookies HttpOnly.
+Logs in and returns HttpOnly cookies.
 
 **Body:**
 ```json
 {
   "email": "user@example.com",
-  "password": "Senha123",
+  "password": "Password123",
   "rememberMe": false
 }
 ```
@@ -222,15 +230,15 @@ Faz login e retorna cookies HttpOnly.
 }
 ```
 
-**Cookies enviados:**
+**Cookies sent:**
 - `access_token` (15 min, HttpOnly, Secure, SameSite=Strict)
-- `refresh_token` (7 dias ou 30 dias se `rememberMe=true`)
+- `refresh_token` (7 days or 30 days if `rememberMe=true`)
 
 ---
 
 #### POST `/api/auth/refresh`
 
-Renova o Access Token usando Automatic Rotation.
+Renews Access Token using Automatic Rotation.
 
 **Response (200):**
 ```json
@@ -244,7 +252,7 @@ Renova o Access Token usando Automatic Rotation.
 
 #### POST `/api/auth/logout`
 
-Revoga os tokens e limpa os cookies.
+Revokes tokens and clears cookies.
 
 **Response (200):**
 ```json
@@ -256,11 +264,11 @@ Revoga os tokens e limpa os cookies.
 
 ---
 
-### **Usuário (Protegidas)**
+### **User (Protected)**
 
 #### GET `/api/users/me`
 
-Retorna dados do usuário autenticado.
+Returns authenticated user data.
 
 **Response (200):**
 ```json
@@ -279,13 +287,13 @@ Retorna dados do usuário autenticado.
 
 #### PATCH `/api/users/password`
 
-Atualiza a senha do usuário.
+Updates user password.
 
 **Body:**
 ```json
 {
-  "currentPassword": "Senha123",
-  "newPassword": "NovaSenha456"
+  "currentPassword": "Password123",
+  "newPassword": "NewPassword456"
 }
 ```
 
@@ -297,92 +305,92 @@ Atualiza a senha do usuário.
 }
 ```
 
-> **Nota:** Todos os tokens ativos são revogados após a atualização de senha.
+> **Note:** All active tokens are revoked after password update.
 
 ---
 
-## 🔒 Decisões de Arquitetura (ADRs)
+## 🔒 Architecture Decisions (ADRs)
 
-### 1. Por que HttpOnly Cookies?
+### 1. Why HttpOnly Cookies?
 
-**Problema:** Tokens armazenados em `localStorage` são vulneráveis a ataques XSS.
+**Problem:** Tokens stored in `localStorage` are vulnerable to XSS attacks.
 
-**Solução:** Cookies com flag `HttpOnly` não são acessíveis via JavaScript, protegendo contra scripts maliciosos.
-
----
-
-### 2. Por que Redis Blacklist?
-
-**Problema:** JWT é stateless, então não há como revogar um token antes da expiração.
-
-**Solução:** Ao fazer logout ou trocar senha, o token é adicionado a uma blacklist no Redis com **TTL dinâmico** (calculado a partir da expiração do token).
+**Solution:** Cookies with the `HttpOnly` flag are not accessible via JavaScript, protecting against malicious scripts.
 
 ---
 
-### 3. Por que Automatic Rotation + Grace Period?
+### 2. Why Redis Blacklist?
 
-**Problema:** Em aplicações modernas, o frontend faz requisições paralelas (ex: carregar perfil + notificações ao mesmo tempo). Ambas podem expirar o Access Token e tentar fazer refresh simultaneamente, causando race conditions.
+**Problem:** JWT is stateless, so there is no way to revoke a token before expiration.
 
-**Solução:** Quando um Refresh Token é usado, geramos um novo par de tokens e salvamos o novo Refresh Token em um campo `gracePeriodToken` do token antigo por 5-10 segundos. Se o token antigo for usado novamente dentro desse período, retornamos o mesmo token novo já gerado.
-
----
-
-### 4. Por que Stateless JWT + Stateful Logout?
-
-**Trade-off:** JWT puro é stateless (ótimo para escalar horizontalmente), mas não permite revogação imediata. Adicionando Redis apenas no logout/troca de senha, mantemos os benefícios de performance do JWT e ganhamos segurança quando necessário.
+**Solution:** On logout or password change, the token is added to a Redis blacklist with **dynamic TTL** (calculated from token expiration).
 
 ---
 
-### 5. Estratégia de Cookies (HttpOnly Strategy)
+### 3. Why Automatic Rotation + Grace Period?
 
-Nossa implementação utiliza **cookies HttpOnly** para armazenar tokens de forma segura, protegendo contra XSS e CSRF.
+**Problem:** In modern apps, the frontend makes parallel requests (e.g., loading profile + notifications simultaneously). Both might expire the Access Token and try to refresh at the same time, causing race conditions.
 
-#### **Configuração dos Cookies**
+**Solution:** When a Refresh Token is used, we generate a new token pair and save the new Refresh Token in a `gracePeriodToken` field of the old token for 5-10 seconds. If the old token is used again within this period, we return the same new token already generated.
 
-| Cookie | Max Age | HttpOnly | Secure | SameSite | Path | Descrição |
-|--------|---------|----------|--------|----------|------|-----------|
-| `access_token` | 15 min | ✅ | ✅ | Strict | `/` | Token de acesso para requisições autenticadas |
-| `refresh_token` | 7 dias (ou 30 dias*) | ✅ | ✅ | Strict | `/api/auth/refresh` | Token para renovação sem re-login |
-| `csrf_token` | Session | ❌ | ✅ | Strict | `/` | Token CSRF para validação (acessível via JS) |
+---
 
-**(\*) 30 dias quando `rememberMe: true`**
+### 4. Why Stateless JWT + Stateful Logout?
 
-#### **Flags de Segurança Explicadas**
+**Trade-off:** Pure JWT is stateless (great for horizontal scaling) but doesn't allow immediate revocation. By adding Redis only on logout/password change, we keep JWT performance benefits and gain security when needed.
 
-- **HttpOnly**: Impede que JavaScript acesse o cookie, mitigando XSS.
-- **Secure**: Cookie só é enviado via HTTPS (⚠️ disable em dev se não tiver SSL).
-- **SameSite=Strict**: Previne envio do cookie em requisições cross-site (proteção CSRF).
-- **Path**: Restringe onde o cookie é enviado (refresh_token só vai para `/api/auth/refresh`).
+---
 
-#### **Fluxo de "Lembrar de Mim"**
+### 5. Cookie Strategy (HttpOnly Strategy)
+
+我们的 implementation uses **HttpOnly cookies** to store tokens securely, protecting against XSS and CSRF.
+
+#### **Cookie Configuration**
+
+| Cookie | Max Age | HttpOnly | Secure | SameSite | Path | Description |
+|--------|---------|----------|--------|----------|------|-------------|
+| `access_token` | 15 min | ✅ | ✅ | Strict | `/` | Access token for authenticated requests |
+| `refresh_token` | 7 days (or 30 days*) | ✅ | ✅ | Strict | `/api/auth/refresh` | Token for renewal without re-login |
+| `csrf_token` | Session | ❌ | ✅ | Strict | `/` | CSRF token for validation (accessible via JS) |
+
+**(\*) 30 days when `rememberMe: true`**
+
+#### **Security Flags Explained**
+
+- **HttpOnly**: Prevents JavaScript from accessing the cookie, mitigating XSS.
+- **Secure**: Cookie is only sent via HTTPS (⚠️ disable in dev if no SSL).
+- **SameSite=Strict**: Prevents sending cookie in cross-site requests (CSRF protection).
+- **Path**: Restricts where the cookie is sent (refresh_token only goes to `/api/auth/refresh`).
+
+#### **"Remember Me" Flow**
 
 ```typescript
-// Login com rememberMe: false → Refresh Token expira em 7 dias
+// Login with rememberMe: false → Refresh Token expires in 7 days
 POST /api/auth/login
 {
   "email": "user@example.com",
-  "password": "senha123",
+  "password": "password123",
   "rememberMe": false
 }
 
-// Login com rememberMe: true → Refresh Token expira em 30 dias
+// Login with rememberMe: true → Refresh Token expires in 30 days
 POST /api/auth/login
 {
   "email": "user@example.com",
-  "password": "senha123",
+  "password": "password123",
   "rememberMe": true
 }
 ```
 
-#### **Por que Path Restrito no Refresh Token?**
+#### **Why Restricted Path on Refresh Token?**
 
-**Problema**: Se o refresh token fosse enviado em **todas** as requisições, aumentaríamos a superfície de ataque (mais oportunidades de interceptação).
+**Problem**: If the refresh token were sent on **all** requests, we would increase the attack surface (more interception opportunities).
 
-**Solução**: Configuramos `Path: /api/auth/refresh`, então o navegador **só envia** o refresh token para esse endpoint específico. Access tokens continuam sendo enviados para todas as rotas autenticadas.
+**Solution**: We configure `Path: /api/auth/refresh`, so the browser **only sends** the refresh token to that specific endpoint. Access tokens continue to be sent to all authenticated routes.
 
 ---
 
-## 📊 Fluxos Principais
+## 📊 Main Flows
 
 ### **Login Flow**
 
@@ -394,17 +402,17 @@ sequenceDiagram
     participant Redis
 
     Client->>API: POST /api/auth/login
-    API->>MySQL: Busca usuário por email
-    MySQL-->>API: Retorna usuário
-    API->>API: Valida senha com Argon2
-    API->>MySQL: Cria RefreshToken no banco
-    API->>API: Gera Access + Refresh JWT
+    API->>MySQL: Finds user by email
+    MySQL-->>API: Returns user
+    API->>API: Validates password with Argon2
+    API->>MySQL: Creates RefreshToken in DB
+    API->>API: Generates Access + Refresh JWT
     API-->>Client: Set-Cookie (HttpOnly)
 ```
 
 ---
 
-### **Refresh Flow (com Automatic Rotation)**
+### **Refresh Flow (with Automatic Rotation)**
 
 ```mermaid
 sequenceDiagram
@@ -413,20 +421,21 @@ sequenceDiagram
     participant MySQL
     participant Redis
 
-    Client->>API: POST /api/auth/refresh (com cookie)
-    API->>API: Verifica JWT do Refresh Token
-    API->>MySQL: Busca token no banco
-    alt Token já foi usado (reuse detected)
-        MySQL-->>API: Token revogado
-        API->>MySQL: Revoga TODOS tokens do usuário
-        API->>Redis: Blacklist TODOS tokens (1h)
+    Client->>API: POST /api/auth/refresh (with cookie)
+    API->>API: Verifies Refresh Token JWT
+    API->>MySQL: Finds token in DB
+    alt Token already used (reuse detected)
+        MySQL-->>API: Token revoked
+        API->>MySQL: Revokes ALL user tokens
+        API->>Redis: Blacklist ALL tokens (1h)
         API-->>Client: 401 Unauthorized
-    else Token válido
-        API->>API: Gera novos tokens
-        API->>MySQL: Cria novo RefreshToken
-        API->>MySQL: Ativa Grace Period no token antigo
-        API-->>Client: Set-Cookie (novos tokens)
+    else Token valid
+        API->>API: Generates new tokens
+        API->>MySQL: Creates new RefreshToken
+        API->>MySQL: Activates Grace Period on old token
+        API-->>Client: Set-Cookie (new tokens)
     end
+end
 ```
 
 ---
@@ -441,17 +450,17 @@ sequenceDiagram
     participant Redis
 
     Client->>API: POST /api/auth/logout
-    API->>API: Extrai Access + Refresh dos cookies
-    API->>Redis: Adiciona Access Token na blacklist (TTL dinâmico)
-    API->>MySQL: Revoga Refresh Token
+    API->>API: Extracts Access + Refresh from cookies
+    API->>Redis: Adds Access Token to blacklist (dynamic TTL)
+    API->>MySQL: Revokes Refresh Token
     API-->>Client: Clear-Cookie + 200 OK
 ```
 
 ---
 
-## 🧪 Testando com cURL
+## 🧪 Testing with cURL
 
-### Registro
+### Register
 
 ```bash
 curl -X POST http://localhost:3000/api/auth/register \
@@ -468,7 +477,7 @@ curl -X POST http://localhost:3000/api/auth/login \
   -c cookies.txt
 ```
 
-### Acessar rota protegida
+### Access protected route
 
 ```bash
 curl -X GET http://localhost:3000/api/users/me \
@@ -484,31 +493,31 @@ curl -X POST http://localhost:3000/api/auth/logout \
 
 ---
 
-## 🔐 Segurança Implementada
+## 🔐 Implemented Security
 
-| Ameaça | Mitigação |
+| Threat | Mitigation |
 |--------|-----------|
-| **XSS** | Cookies HttpOnly |
+| **XSS** | HttpOnly Cookies |
 | **CSRF** | Synchronizer Token Pattern |
-| **Brute-force** | Rate Limiting Híbrido (IP + Email) |
+| **Brute-force** | Hybrid Rate Limiting (IP + Email) |
 | **Token Theft** | Reuse Detection + Blacklist |
-| **Weak Passwords** | Validação Zod + Argon2 |
-| **Timing Attacks** | Constant-time comparison no CSRF |
+| **Weak Passwords** | Zod Validation + Argon2 |
+| **Timing Attacks** | Constant-time comparison in CSRF |
 | **SQL Injection** | Prisma ORM (prepared statements) |
 
 ---
 
-## 📝 Licença
+## 📝 License
 
-MIT License - Este projeto é de código aberto e pode ser usado livremente.
-
----
-
-## 👤 Autor
-
-**Seu Nome**  
-[LinkedIn](https://linkedin.com/in/seu-perfil) | [GitHub](https://github.com/seu-usuario)
+MIT License - This project is open source and can be used freely.
 
 ---
 
-**⭐ Se este projeto foi útil, deixe uma estrela no GitHub!**
+## 👤 Author
+
+**Gerson Resplandes**  
+[LinkedIn](https://www.linkedin.com/in/gerson-resplandes) | [GitHub](https://github.com/GersonResplandes)
+
+---
+
+**⭐ If this project was useful, leave a star on GitHub!**

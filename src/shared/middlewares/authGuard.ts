@@ -34,10 +34,18 @@ export const authGuard = async (req: ExpressRequest, _res: Response, next: NextF
     }
 
     // 4. Check no Redis: todos os tokens do usuário foram revogados?
-    const allRevoked = await tokenBlacklist.areAllUserTokensRevoked(payload.userId);
+    const revocationTimestamp = await tokenBlacklist.getUserRevocationTimestamp(payload.userId);
 
-    if (allRevoked) {
-      throw new UnauthorizedError('All user tokens have been revoked');
+    if (revocationTimestamp) {
+      if (!payload.iat) {
+        // Se o token não tem iat, assume que é antigo/inseguro se houver revogação
+        throw new UnauthorizedError('Token revocation check failed: missing iat');
+      }
+
+      // Se o token foi emitido ANTES da revogação, bloqueia
+      if (payload.iat < revocationTimestamp) {
+        throw new UnauthorizedError('Token has been revoked by user security event');
+      }
     }
 
     // 5. Injeta o usuário no Request

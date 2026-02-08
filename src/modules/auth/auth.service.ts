@@ -4,6 +4,7 @@ import { tokenManager } from '@shared/utils/TokenManager';
 import { tokenBlacklist } from '@shared/utils/TokenBlacklist';
 import { ConflictError, UnauthorizedError, BadRequestError } from '@shared/errors/AppError';
 import { env } from '@config/env';
+import { logger } from '@shared/utils/Logger';
 import { refreshTokenRepository } from './refreshToken.repository';
 import type { RegisterDTO, LoginDTO, UpdatePasswordDTO } from './auth.schema';
 
@@ -29,6 +30,8 @@ export class AuthService {
       name: data.name,
     });
 
+    logger.info('User registered', { userId: user.id, email: user.email });
+
     return {
       id: user.id,
       email: user.email,
@@ -45,6 +48,7 @@ export class AuthService {
     const user = await userRepository.findByEmail(data.email);
 
     if (!user) {
+      logger.warn('Login failed: User not found', { email: data.email });
       throw new UnauthorizedError('Invalid credentials');
     }
 
@@ -52,6 +56,7 @@ export class AuthService {
     const passwordMatches = await hashProvider.compare(data.password, user.password);
 
     if (!passwordMatches) {
+      logger.warn('Login failed: Invalid password', { userId: user.id, email: user.email });
       throw new UnauthorizedError('Invalid credentials');
     }
 
@@ -65,18 +70,20 @@ export class AuthService {
     const refreshExpiresIn = data.rememberMe ? '30d' : env.JWT_REFRESH_EXPIRES_IN;
     const expiresAt = this.calculateExpiration(refreshExpiresIn);
 
-    // Cria Refresh Token no banco
-    const refreshTokenRecord = await refreshTokenRepository.create(
+    // Gera JWT do Refresh Token PRIMEIRO (para poder guardar no DB)
+    const refreshToken = tokenManager.generateRefreshToken({
+      userId: user.id,
+      tokenId: crypto.randomUUID(), // Token único para o JWT
+    });
+
+    // Cria Refresh Token no banco com hash do JWT
+    await refreshTokenRepository.create(
       user.id,
-      crypto.randomUUID(), // Token único
+      refreshToken, // Agora passamos o JWT para ser hasheado
       expiresAt
     );
 
-    // Gera JWT do Refresh Token
-    const refreshToken = tokenManager.generateRefreshToken({
-      userId: user.id,
-      tokenId: refreshTokenRecord.id,
-    });
+    logger.info('Login successful', { userId: user.id, email: user.email });
 
     return {
       user: {
@@ -101,15 +108,17 @@ export class AuthService {
     const tokenRecord = await refreshTokenRepository.findByToken(refreshToken);
 
     if (!tokenRecord) {
+      logger.warn('Refresh token not found', { tokenId: payload.tokenId });
       throw new UnauthorizedError('Invalid refresh token');
     }
 
     // Verifica se o token foi revogado
     if (tokenRecord.revokedAt) {
       // REUSE DETECTION: Token foi usado após revogação
+      logger.warn('Token reuse detected', { userId: payload.userId, tokenId: payload.tokenId });
       // Revoga toda a família de tokens (segurança)
       await refreshTokenRepository.revokeAllByUserId(payload.userId);
-      await tokenBlacklist.revokeAllUserTokens(payload.userId, 3600);
+      await tokenBlacklist.revokeAllUserTokens(payload.userId, 5);
 
       throw new UnauthorizedError('Token reuse detected. All sessions revoked.');
     }
@@ -141,28 +150,38 @@ export class AuthService {
       email: tokenRecord.user.email,
     });
 
-    const newRefreshTokenRecord = await refreshTokenRepository.create(
+    // Gera o novo Refresh Token JWT PRIMEIRO
+    const newRefreshToken = tokenManager.generateRefreshToken({
+      userId: tokenRecord.user.id,
+      tokenId: crypto.randomUUID(),
+    });
+
+    // Cria registro no banco com hash do JWT e captura o ID
+    const newTokenRecord = await refreshTokenRepository.create(
       tokenRecord.user.id,
-      crypto.randomUUID(),
+      newRefreshToken, // Passa o JWT para ser hasheado
       new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 dias
     );
 
-    const newRefreshToken = tokenManager.generateRefreshToken({
-      userId: tokenRecord.user.id,
-      tokenId: newRefreshTokenRecord.id,
-    });
+    // Ativa Grace Period no token antigo (pode falhar se já foi deletado)
+    try {
+      await refreshTokenRepository.setGracePeriod(
+        tokenRecord.id,
+        newRefreshToken,
+        env.REFRESH_GRACE_PERIOD_SECONDS
+      );
 
-    // Ativa Grace Period no token antigo
-    await refreshTokenRepository.setGracePeriod(
-      tokenRecord.id,
-      newRefreshToken,
-      env.REFRESH_GRACE_PERIOD_SECONDS
-    );
-
-    // Revoga o token antigo (após grace period)
-    setTimeout(async () => {
-      await refreshTokenRepository.revoke(tokenRecord.id, newRefreshTokenRecord.id);
-    }, env.REFRESH_GRACE_PERIOD_SECONDS * 1000);
+      // Revoga o token antigo (após grace period)
+      setTimeout(async () => {
+        try {
+          await refreshTokenRepository.revoke(tokenRecord.id, newTokenRecord.id);
+        } catch {
+          // Token já foi revogado ou deletado - ignora
+        }
+      }, env.REFRESH_GRACE_PERIOD_SECONDS * 1000);
+    } catch {
+      // Token já foi revogado/deletado - ignora e prossegue
+    }
 
     return {
       accessToken: newAccessToken,
@@ -186,6 +205,8 @@ export class AuthService {
         // Token inválido, ignora
       }
     }
+
+    logger.info('Logout', { accessToken: `${accessToken.substring(0, 10)}...` });
   }
 
   /**
@@ -213,7 +234,10 @@ export class AuthService {
 
     // REVOGA TODOS OS TOKENS (força re-login em todos os dispositivos)
     await refreshTokenRepository.revokeAllByUserId(userId);
+    // Invalida tokens emitidos ANTES de agora (timestamp check no authGuard)
     await tokenBlacklist.revokeAllUserTokens(userId, 3600);
+
+    logger.info('Password updated', { userId });
   }
 
   private calculateExpiration(duration: string): Date {

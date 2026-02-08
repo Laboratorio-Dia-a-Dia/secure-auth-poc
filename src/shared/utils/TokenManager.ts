@@ -5,6 +5,8 @@ import { UnauthorizedError } from '@shared/errors/AppError';
 export interface AccessTokenPayload {
   userId: string;
   email: string;
+  iat?: number;
+  exp?: number;
 }
 
 export interface RefreshTokenPayload {
@@ -19,6 +21,7 @@ export class TokenManager {
       expiresIn: env.JWT_ACCESS_EXPIRES_IN,
       issuer: 'secure-auth-poc',
       audience: 'api',
+      jwtid: crypto.randomUUID(),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
   }

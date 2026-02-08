@@ -24,6 +24,11 @@ Sistema profissional de autenticação JWT com HttpOnly Cookies, Redis Blacklist
 3. **Refresh** → POST /api/auth/refresh → Automatic Rotation
 4. **Logout** → POST /api/auth/logout → Blacklist + Clear Cookies
 5. **Update Password** → PATCH /api/users/password → Revoke All Tokens
+6. **CSRF Protection**:
+      - O sistema utiliza **Synchronizer Token Pattern**.
+      - O cliente deve ler o cookie \`csrf_token\` (não HttpOnly).
+      - O valor deve ser enviado no header \`x-csrf-token\` em requisições de mutação (POST, PUT, PATCH, DELETE).
+      - Em ambiente de teste (\`NODE_ENV=test\`), a validação é ignorada.
       `,
       contact: {
         name: 'API Support',

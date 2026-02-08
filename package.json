@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "node --max-old-space-size=4096 node_modules/typescript/bin/tsc",
+    "build": "tsc",
     "start": "node dist/server.js",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
@@ -21,7 +21,7 @@
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --write \"src/**/*.ts\"",
-    "type-check": "node --max-old-space-size=4096 node_modules/typescript/bin/tsc --noEmit",
+    "type-check": "tsc --noEmit",
     "prepare": "husky"
   },
   "keywords": [
@@ -36,7 +36,7 @@
     "typescript",
     "clean-architecture"
   ],
-  "author": "Seu Nome",
+  "author": "Your Name <your.email@example.com>",
   "license": "MIT",
   "dependencies": {
     "@prisma/client": "^6.1.0",
@@ -52,6 +52,7 @@
     "redis": "^4.7.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
+    "winston": "^3.19.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {

@@ -51,6 +51,7 @@ module.exports = {
         'class-methods-use-this': 'off',
         'no-underscore-dangle': 'off',
         'consistent-return': 'off',
+        'dot-notation': 'off',
     },
     settings: {
         'import/resolver': {

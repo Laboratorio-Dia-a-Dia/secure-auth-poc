@@ -56,23 +56,36 @@ export class TokenBlacklist {
   /**
    * Revoga todos os tokens de um usuário específico
    * @param userId - ID do usuário
-   * @param ttl - Tempo de vida em segundos
+   * @param ttl - Tempo de vida em segundos (default: 1 hora)
    */
   async revokeAllUserTokens(userId: string, ttl: number = 3600): Promise<void> {
     const client = await redisClient.getClient();
     const key = `${this.prefix}:user:${userId}`;
-    await client.setEx(key, ttl, 'all_revoked');
+    // Armazena o timestamp atual para invalidar apenas tokens emitidos ANTES de agora
+    const now = Math.floor(Date.now() / 1000);
+    await client.setEx(key, ttl, now.toString());
   }
 
   /**
-   * Verifica se todos os tokens de um usuário foram revogados
+   * Obtém o timestamp de revogação global do usuário
    * @param userId - ID do usuário
+   * @returns Timestamp (segundos) ou null se não houver revogação
    */
-  async areAllUserTokensRevoked(userId: string): Promise<boolean> {
+  async getUserRevocationTimestamp(userId: string): Promise<number | null> {
     const client = await redisClient.getClient();
     const key = `${this.prefix}:user:${userId}`;
     const result = await client.get(key);
-    return result === 'all_revoked';
+    return result ? parseInt(result, 10) : null;
+  }
+
+  /**
+   * Verifica se todos os tokens de um usuário foram revogados (Legacy support)
+   * @deprecated Use getUserRevocationTimestamp com checagem de iat
+   * @param userId - ID do usuário
+   */
+  async areAllUserTokensRevoked(userId: string): Promise<boolean> {
+    const timestamp = await this.getUserRevocationTimestamp(userId);
+    return !!timestamp;
   }
 
   private getKey(token: string): string {
