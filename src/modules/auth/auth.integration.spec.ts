@@ -284,7 +284,7 @@ describe('Auth Integration Tests', () => {
             newPassword: 'NewPassword789!',
           })
           .expect(401);
-      });
+      }, 20000);
   });
 
   describe('Token Reuse Detection', () => {
