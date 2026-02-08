@@ -1,7 +1,7 @@
 # ========================================
 # Stage 1: Builder
 # ========================================
-FROM node:20-alpine AS builder
+FROM node:25-alpine AS builder
 
 WORKDIR /app
 
@@ -24,7 +24,7 @@ RUN npm run build
 # ========================================
 # Stage 2: Runtime
 # ========================================
-FROM node:20-alpine
+FROM node:25-alpine
 
 # Install wget for healthchecks
 RUN apk add --no-cache wget
