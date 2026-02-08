@@ -16,13 +16,33 @@ Professional JWT authentication system based on **HttpOnly Cookies**, **Redis Bl
 
 This is a **Proof of Concept (PoC)** demonstrating:
 
-- ✅ **Stateless** authentication (JWT) with **stateful** revocation (Redis Blacklist)
-- ✅ **Automatic Token Rotation** with **Grace Period** (prevents race conditions)
-- ✅ **Reuse Detection** (detects token theft and revokes entire chain)
+- ✅ **Hybrid** authentication strategy (Stateless JWT + Stateful Redis Revocation)
+- ✅ **Automatic Token Rotation** with **Grace Period** (UX vs Security trade-off)
+- ✅ **Reuse Detection** (Security-first approach: detects theft vs false positives)
 - ✅ **Hybrid Rate Limiting** (by IP + Email for login, preventing brute-force)
-- ✅ **CSRF Protection** (Synchronizer Token Pattern)
+- ✅ **CSRF Protection** (Defense in depth: Synchronizer Token + SameSite=Strict)
 - ✅ **HttpOnly Cookies** (XSS mitigation)
 - ✅ **Clean Architecture** (Controllers → Services → Repositories)
+
+---
+
+## ⚖️ Security Trade-offs & Design Decisions
+
+### 1. Hybrid Architecture (Stateless vs Stateful)
+While JWT is natively stateless, this architecture implements a **Hybrid Strategy**. We use Redis for immediate revocation (Stateful) and JWT for identity propagation. **Why?** Pure statelessness prevents immediate logout/ban. This hybrid approach offers the best of both worlds: performance of JWT with the control of sessions.
+
+### 2. Grace Period Window
+To prevent UX failures due to race conditions (concurrent requests rotating tokens), we implement a **5-10s Grace Period**.
+- **Risk:** An attacker could theoretically use a stolen token within this small window.
+- **Decision:** We prioritize UX stability. The window is minimal and monitored.
+
+### 3. Reuse Detection (False Positive Risk)
+If a token is reused, we revoke **ALL** user sessions.
+- **Scenario:** If a legitimate user has a slow connection and retry logic triggers a reuse, they might be logged out.
+- **Decision:** We treat *any* reuse as a potential theft. It's better to force a legitimate user to re-login than to allow an attacker to persist.
+
+### 4. CSRF: Double Protection
+Modern browsers support `SameSite=Strict`, which technically prevents CSRF. However, we maintain the **Synchronizer Token Pattern** as a **Defense in Depth** layer, ensuring security even against older browsers or subtle SameSite bypasses.
 
 ---
 

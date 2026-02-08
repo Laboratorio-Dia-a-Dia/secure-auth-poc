@@ -16,13 +16,33 @@ Sistema profissional de autenticação JWT baseado em **HttpOnly Cookies**, **Re
 
 Este é um **Proof of Concept (PoC)** que demonstra:
 
-- ✅ Autenticação **stateless** (JWT) com revogação **stateful** (Redis Blacklist)
-- ✅ **Automatic Token Rotation** com **Grace Period** (evita race conditions)
-- ✅ **Reuse Detection** (detecta roubo de tokens e revoga toda a cadeia)
+- ✅ **Estratégia Híbrida** de autenticação (JWT Stateless + Revogação Redis Stateful)
+- ✅ **Automatic Token Rotation** com **Grace Period** (Trade-off UX vs Segurança)
+- ✅ **Reuse Detection** (Abordagem Security-first: detecta roubo vs falsos positivos)
 - ✅ **Rate Limiting Híbrido** (por IP + Email para login, bloqueio de brute-force)
-- ✅ **CSRF Protection** (Synchronizer Token Pattern)
+- ✅ **CSRF Protection** (Defesa em profundidade: Synchronizer Token + SameSite=Strict)
 - ✅ **HttpOnly Cookies** (mitigação de XSS)
 - ✅ **Clean Architecture** modular (Controllers → Services → Repositories)
+
+---
+
+## ⚖️ Trade-offs de Segurança & Decisões de Design
+
+### 1. Arquitetura Híbrida (Stateless vs Stateful)
+Embora JWT seja nativamente stateless, esta arquitetura implementa uma **Estratégia Híbrida**. Usamos Redis para revogação imediata (Stateful) e JWT para propagação de identidade. **Por quê?** Statelessness puro impede logout/banimento imediato. Esta abordagem híbrida oferece o melhor dos dois mundos: performance do JWT com o controle de sessões.
+
+### 2. Janela de Grace Period
+Para evitar falhas de UX devido a race conditions (requisições concorrentes rotacionando tokens), implementamos um **Grace Period de 5-10s**.
+- **Risco:** Um atacante poderia teoricamente usar um token roubado dentro desta pequena janela.
+- **Decisão:** Priorizamos a estabilidade da UX (User Experience). A janela é mínima e monitorada.
+
+### 3. Reuse Detection (Risco de Falso Positivo)
+Se um token for reutilizado, revogamos **TODAS** as sessões do usuário.
+- **Cenário:** Se um usuário legítimo tiver uma conexão lenta e a lógica de retry disparar um reuso, ele pode ser deslogado.
+- **Decisão:** Tratamos *qualquer* reuso como potencial roubo. É mais seguro forçar um re-login de um usuário legítimo do que permitir a persistência de um atacante.
+
+### 4. CSRF: Dupla Proteção
+Navegadores modernos suportam `SameSite=Strict`, o que tecnicamente previne CSRF. No entanto, mantemos o **Synchronizer Token Pattern** como uma camada de **Defesa em Profundidade**, garantindo segurança mesmo contra navegadores antigos ou bypasses sutis de SameSite.
 
 ---
 

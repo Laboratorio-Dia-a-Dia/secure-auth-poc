@@ -258,31 +258,33 @@ describe('Auth Integration Tests', () => {
       });
     }, 20000);
 
-    it('should reject wrong current password', async () => {
-      const freshLogin = await request(app).post('/api/auth/login').send({
-        email: testUser.email,
-        password: testUser.password,
-        rememberMe: false,
+    it(
+      'should reject wrong current password',
+      async () => {
+        const freshLogin = await request(app).post('/api/auth/login').send({
+          email: testUser.email,
+          password: testUser.password,
+          rememberMe: false,
+        });
+
+        const cookies = freshLogin.headers['set-cookie'];
+        const accessTokenCookie = extractCookie(cookies, 'access_token');
+
+        if (!accessTokenCookie) {
+          // Debug info if needed
+        }
+
+        expect(accessTokenCookie).toBeTruthy();
+
+        await request(app)
+          .patch('/api/users/password')
+          .set('Cookie', accessTokenCookie)
+          .send({
+            currentPassword: 'WrongPassword',
+            newPassword: 'NewPassword789!',
+          })
+          .expect(401);
       });
-
-      const cookies = freshLogin.headers['set-cookie'];
-      const accessTokenCookie = extractCookie(cookies, 'access_token');
-
-      if (!accessTokenCookie) {
-        // Debug info if needed
-      }
-
-      expect(accessTokenCookie).toBeTruthy();
-
-      await request(app)
-        .patch('/api/users/password')
-        .set('Cookie', accessTokenCookie)
-        .send({
-          currentPassword: 'WrongPassword',
-          newPassword: 'NewPassword789!',
-        })
-        .expect(401);
-    });
   });
 
   describe('Token Reuse Detection', () => {

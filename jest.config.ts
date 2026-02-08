@@ -34,6 +34,8 @@ const config: Config = {
     verbose: true,
     testTimeout: 10000, // 10s para testes de integração
     setupFilesAfterEnv: ['<rootDir>/src/test/setup.ts'],
+    testPathIgnorePatterns: ['/node_modules/', '/dist/'],
+    roots: ['<rootDir>/src'],
 };
 
 export default config;
